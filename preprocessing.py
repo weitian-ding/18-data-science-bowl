@@ -6,10 +6,6 @@ import pandas as pd
 INPUT_DIR = 'data'
 OUTPUT_DIR = 'data'
 
-FIXED_IMG_HEIGHT = 256
-FIXED_IMG_WIDTH = 256
-FIXED_IMG_CHANNEL = 3
-
 
 def list_all_images():
     image_paths = glob(os.path.join(INPUT_DIR, 'stage1_*', '*', '*', '*'))
@@ -61,5 +57,5 @@ if __name__ == '__main__':
     test_df = preprocess(test_df, labeled=False)
     print('preprocessing testing data...')
     print(test_df.head())
-    test_df.to_csv(os.path.join(OUTPUT_DIR, 'test_data.h5'), index=False)
+    test_df.to_csv(os.path.join(OUTPUT_DIR, 'test_data.csv'), index=False)
     print('%s rows in testing data' % test_df.shape[0])
