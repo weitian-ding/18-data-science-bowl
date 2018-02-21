@@ -51,11 +51,11 @@ if __name__ == '__main__':
     train_df = preprocess(train_df)
     print('preprocessing training data...')
     print(train_df.head())
-    train_df.to_csv(os.path.join(OUTPUT_DIR, 'train_data.csv'), index=False)
+    train_df.to_json(os.path.join(OUTPUT_DIR, 'train_data.json'))
     print('%s rows in training data' % train_df.shape[0])
 
     test_df = preprocess(test_df, labeled=False)
     print('preprocessing testing data...')
     print(test_df.head())
-    test_df.to_csv(os.path.join(OUTPUT_DIR, 'test_data.csv'), index=False)
+    test_df.to_json(os.path.join(OUTPUT_DIR, 'test_data.json'))
     print('%s rows in testing data' % test_df.shape[0])
