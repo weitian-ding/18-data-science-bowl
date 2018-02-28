@@ -6,3 +6,6 @@ preprocessing.py
 
 ## Model training 
 model.py
+
+## Prediction
+predict.py
