@@ -2,10 +2,10 @@
 https://www.kaggle.com/c/data-science-bowl-2018/data
 
 ## Data processing 
-preprocessing.py
+[preprocessing.py](preprocessing.py)
 
 ## Model training 
-model.py
+[train.py](train.py)
 
 ## Prediction
-predict.py
+TODO
