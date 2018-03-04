@@ -1,4 +1,5 @@
 import pandas as pd
+from skimage import img_as_float
 from skimage.io import imread
 from skimage.transform import resize
 
@@ -35,6 +36,9 @@ def read_mask(mask_paths,
 
         mask = np.maximum(mask, _mask)
 
+    mask = np.ndarray.astype(mask, np.uint8)
+    mask = img_as_float(mask)
+
     return mask
 
 
@@ -45,7 +49,7 @@ def read_image(img_path,
     if not os.path.exists(img_path):
         print('%s does not exists' % img_path)
 
-    img = imread(img_path)
+    img = imread(img_path)[:, :, 0:3]
 
     if fixed_img_height is not None and fixed_img_width is not None and fixed_chann_num is not None:
         img = resize(img,
@@ -54,6 +58,7 @@ def read_image(img_path,
                      preserve_range=True)
 
     img = np.ndarray.astype(img, np.uint8)
+    img = img_as_float(img)
 
     return img
 
