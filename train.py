@@ -17,12 +17,13 @@ MODEL_DIR = 'models'
 def create_model():
     inputs = Input((256, 256, 3))
     # normed = BatchNormalization()(inputs)
+    normed = BatchNormalization()(inputs)
 
     c1 = Conv2D(filters=16,
                 kernel_size=(3, 3),
                 activation='elu',
                 kernel_initializer='he_normal',
-                padding='same')(inputs)
+                padding='same')(normed)
     c1 = Dropout(0.2)(c1)
     c1 = Conv2D(filters=16,
                 kernel_size=(3, 3),
@@ -57,11 +58,54 @@ def create_model():
                 padding='same')(c3)
     p3 = MaxPooling2D(pool_size=(2, 2))(c3)
 
+    c4 = Conv2D(filters=128,
+                kernel_size=(3, 3),
+                activation='elu',
+                kernel_initializer='he_normal',
+                padding='same')(p3)
+    c4 = Dropout(0.2)(c4)
+    c4 = Conv2D(filters=128,
+                kernel_size=(3, 3),
+                activation='elu',
+                kernel_initializer='he_normal',
+                padding='same')(c4)
+    p4 = MaxPooling2D(pool_size=(2, 2))(c4)
+
+    c5 = Conv2D(filters=256,
+                kernel_size=(3, 3),
+                activation='elu',
+                kernel_initializer='he_normal',
+                padding='same')(p4)
+    c5 = Dropout(0.2)(c5)
+    c5 = Conv2D(filters=256,
+                kernel_size=(3, 3),
+                activation='elu',
+                kernel_initializer='he_normal',
+                padding='same')(c5)
+    # p5 = MaxPooling2D(pool_size=(2, 2))(c5)
+
+    u5 = Conv2DTranspose(filters=128,
+                         kernel_size=(2, 2),
+                         strides=(2, 2),
+                         kernel_initializer='he_normal',
+                         activation='elu')(c5)
+    u5 = Conv2D(filters=128,
+                kernel_size=(3, 3),
+                padding='same',
+                kernel_initializer='he_normal',
+                activation='elu')(Concatenate()([u5, c4]))
+    u5 = Dropout(0.2)(u5)
+    u5 = Conv2D(filters=128,
+                kernel_size=(3, 3),
+                padding='same',
+                kernel_initializer='he_normal',
+                activation='elu')(u5)
+
     u1 = Conv2DTranspose(filters=64,
                          kernel_size=(2, 2),
                          strides=(2, 2),
                          kernel_initializer='he_normal',
-                         activation='elu')(p3)
+                         activation='elu')(u5)
     u1 = Conv2D(filters=64,
                 kernel_size=(3, 3),
                 padding='same',
@@ -102,13 +146,20 @@ def create_model():
                 kernel_initializer='he_normal',
                 activation='elu')(Concatenate()([u3, c1]))
     u3 = Dropout(0.2)(u3)
-    u3 = Conv2D(filters=1,
+    u3 = Conv2D(filters=16,
+                kernel_size=(3, 3),
+                padding='same',
+                kernel_initializer='he_normal',
+                activation='elu')(Concatenate()([u3, c1]))
+
+
+    output = Conv2D(filters=1,
                 kernel_size=(1, 1),
                 padding='same',
                 kernel_initializer='he_normal',
                 activation='sigmoid')(u3)
 
-    output = Reshape(target_shape=(256, 256))(u3)
+    output = Reshape(target_shape=(256, 256))(output)
 
     return Model(inputs=[inputs], outputs=output)
 

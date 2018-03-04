@@ -25,18 +25,14 @@ def read_mask(mask_paths,
         _mask = imread(mask_path)
 
         if mask_shape is not None:
-            _mask = resize(_mask,
-                           mask_shape,
-                           mode='constant',
-                           preserve_range=True)
+            _mask = _resize(_mask, mask_shape)
 
         if mask is None:
-            mask = np.zeros(mask_shape) if mask_shape is not None else \
-                np.zeros(_mask.shape)
+            mask = np.zeros(mask_shape, dtype=np.uint8) if mask_shape is not None else \
+                np.zeros(_mask.shape, dtype=np.uint8)
 
         mask = np.maximum(mask, _mask)
 
-    mask = np.ndarray.astype(mask, np.uint8)
     mask = img_as_float(mask)
 
     return mask
@@ -49,18 +45,21 @@ def read_image(img_path,
     if not os.path.exists(img_path):
         print('%s does not exists' % img_path)
 
-    img = imread(img_path)[:, :, 0:3]
+    img = imread(img_path)
 
-    if fixed_img_height is not None and fixed_img_width is not None and fixed_chann_num is not None:
-        img = resize(img,
-                     (fixed_img_height, fixed_img_width, fixed_chann_num),
-                     mode='constant',
-                     preserve_range=True)
+    if fixed_chann_num is not None:
+        img = imread(img_path)[:, :, 0:fixed_chann_num]
 
-    img = np.ndarray.astype(img, np.uint8)
+    if fixed_img_height is not None and fixed_img_width is not None:
+        img = _resize(img, (fixed_img_height, fixed_img_width, fixed_chann_num))
+
     img = img_as_float(img)
 
     return img
+
+
+def _resize(img, shape):
+    return resize(img, shape, mode='constant', preserve_range=False)
 
 
 class BaseNucleiImageReader(object):
