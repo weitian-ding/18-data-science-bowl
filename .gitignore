@@ -104,5 +104,12 @@ ENV/
 # data
 data/
 
+# models
+models/
+
+# tensorboard
+tensorboard
+
+
 #pycharm
 .idea
