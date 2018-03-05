@@ -19,6 +19,8 @@ class NucleiSequence(Sequence):
         end_idx = start_idx + self.batch_size
         row_idx = [i % self.df.shape[0] for i in range(start_idx, end_idx)]
 
+        print('loading %s' % row_idx)
+
         batch_df = self.df.iloc[row_idx]
         batch_df = batch_df.apply(self.img_reader, axis=1)
 

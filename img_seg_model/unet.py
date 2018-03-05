@@ -11,14 +11,13 @@ class Unet(object):
     def build_model(self):
         inputs = Input((256, 256, 3))
         # normed = BatchNormalization()(inputs)
-        normed = BatchNormalization()(inputs)
 
         c1 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     activation='elu',
                     kernel_initializer='he_normal',
-                    padding='same')(normed)
-        c1 = Dropout(0.2)(c1)
+                    padding='same')(inputs)
+        c1 = Dropout(0.1)(c1)
         c1 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     activation='elu',
@@ -31,7 +30,7 @@ class Unet(object):
                     activation='elu',
                     kernel_initializer='he_normal',
                     padding='same')(p1)
-        c2 = Dropout(0.2)(c2)
+        c2 = Dropout(0.1)(c2)
         c2 = Conv2D(filters=32,
                     kernel_size=(3, 3),
                     activation='elu',
@@ -70,7 +69,7 @@ class Unet(object):
                     activation='elu',
                     kernel_initializer='he_normal',
                     padding='same')(p4)
-        c5 = Dropout(0.2)(c5)
+        c5 = Dropout(0.3)(c5)
         c5 = Conv2D(filters=256,
                     kernel_size=(3, 3),
                     activation='elu',
@@ -78,79 +77,73 @@ class Unet(object):
                     padding='same')(c5)
         # p5 = MaxPooling2D(pool_size=(2, 2))(c5)
 
-        u5 = Conv2DTranspose(filters=128,
+        u6 = Conv2DTranspose(filters=128,
                              kernel_size=(2, 2),
                              strides=(2, 2),
-                             kernel_initializer='he_normal',
-                             activation='elu')(c5)
-        u5 = Conv2D(filters=128,
+                             padding='same')(c5)
+        u6 = Conv2D(filters=128,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(Concatenate()([u5, c4]))
-        u5 = Dropout(0.2)(u5)
-        u5 = Conv2D(filters=128,
+                    activation='elu')(Concatenate()([u6, c4]))
+        u6 = Dropout(0.2)(u6)
+        u6 = Conv2D(filters=128,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(u5)
+                    activation='elu')(u6)
 
-        u1 = Conv2DTranspose(filters=64,
+        u7 = Conv2DTranspose(filters=64,
                              kernel_size=(2, 2),
                              strides=(2, 2),
-                             kernel_initializer='he_normal',
-                             activation='elu')(u5)
-        u1 = Conv2D(filters=64,
+                             padding='same')(u6)
+        u7 = Conv2D(filters=64,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(Concatenate()([u1, c3]))
-        u1 = Dropout(0.2)(u1)
-        u1 = Conv2D(filters=64,
+                    activation='elu')(Concatenate()([u7, c3]))
+        u7 = Dropout(0.2)(u7)
+        u7 = Conv2D(filters=64,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(u1)
+                    activation='elu')(u7)
 
-        u2 = Conv2DTranspose(filters=32,
+        u8 = Conv2DTranspose(filters=32,
                              kernel_size=(2, 2),
                              strides=(2, 2),
-                             kernel_initializer='he_normal',
-                             activation='elu')(u1)
-        u2 = Conv2D(filters=32,
+                             padding='same')(u7)
+        u8 = Conv2D(filters=32,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(Concatenate()([u2, c2]))
-        u2 = Dropout(0.2)(u2)
-        u2 = Conv2D(filters=32,
+                    activation='elu')(Concatenate()([u8, c2]))
+        u8 = Dropout(0.1)(u8)
+        u8 = Conv2D(filters=32,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(u2)
+                    activation='elu')(u8)
 
-        u3 = Conv2DTranspose(filters=16,
+        u9 = Conv2DTranspose(filters=16,
                              kernel_size=(2, 2),
                              strides=(2, 2),
-                             kernel_initializer='he_normal',
-                             activation='elu')(u2)
-        u3 = Conv2D(filters=16,
+                             padding='same')(u8)
+        u9 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(Concatenate()([u3, c1]))
-        u3 = Dropout(0.2)(u3)
-        u3 = Conv2D(filters=16,
+                    activation='elu')(Concatenate()([u9, c1]))
+        u9 = Dropout(0.1)(u9)
+        u9 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     padding='same',
                     kernel_initializer='he_normal',
-                    activation='elu')(u3)
+                    activation='elu')(u9)
 
         output = Conv2D(filters=1,
                         kernel_size=(1, 1),
-                        padding='same',
-                        kernel_initializer='he_normal',
-                        activation='sigmoid')(u3)
+                        activation='sigmoid')(u9)
 
         output = Reshape(target_shape=(256, 256))(output)
 

@@ -110,6 +110,8 @@ models/
 # tensorboard
 tensorboard
 
-
 #pycharm
 .idea
+
+# aws key pair
+*.pem

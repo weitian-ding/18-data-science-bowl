@@ -1,15 +1,15 @@
+import argparse
 import os
 from datetime import datetime
 from time import time
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.utils import plot_model
 
 from img_seg_model.unet import Unet
-from utils.image_data_augmentation import BasicNucleiImageReader, read_image, read_mask
+from utils.image_data_augmentation import BasicNucleiImageReader
 from utils.metrics import dice_coef_loss
 from utils.nuclei_sequence import NucleiSequence
 
@@ -19,20 +19,18 @@ MODEL_DIR = 'models'
 MODEL_NAME_PREFIX = 'unet'
 TB_DIR = 'tensorboard'
 
-BATCH_SIZE = 32
-EPOCHS = 100
-STEPS_PER_EPOCH = 21
-
 
 def compile_model(model):
+
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=[dice_coef_loss, 'mse', 'acc'])
 
-    print(model.summary())
+    model.summary()
 
 
 def load_cv_data(img_reader):
+
     print('loading cross validation data...')
 
     cv_df = pd.read_json(CV_DATA_PATH)
@@ -44,7 +42,13 @@ def load_cv_data(img_reader):
            np.array(cv_df['mask'].tolist())
 
 
-def train_model(model):
+def train_model(model, batch_size,
+                steps_per_epoch,
+                epochs,
+                max_queue_size,
+                workers,
+                disable_multi_proc):
+
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
     image_reader = BasicNucleiImageReader(fixed_img_height=256,
@@ -53,7 +57,7 @@ def train_model(model):
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
-                                      batch_size=BATCH_SIZE,
+                                      batch_size=batch_size,
                                       img_reader=image_reader)
 
     # load cross validation data
@@ -76,20 +80,33 @@ def train_model(model):
     earlystop = EarlyStopping(patience=5, verbose=1)
 
     hist = model.fit_generator(generator=nuclei_image_seq,
-                               steps_per_epoch=STEPS_PER_EPOCH,
-                               epochs=EPOCHS,
-                               max_queue_size=5,
-                               workers=2,
-                               use_multiprocessing=True,
+                               steps_per_epoch=steps_per_epoch,
+                               epochs=epochs,
+                               max_queue_size=max_queue_size,
+                               workers=workers,
+                               use_multiprocessing=(not disable_multi_proc),
                                shuffle=True,
                                validation_data=(X_cv, y_cv),
                                callbacks=[checkpoint, tb, earlystop])
 
     print('printing training history...')
-    print(hist)
 
 
 if __name__ == '__main__':
+
+    # parse command line arguments
+    parser = argparse.ArgumentParser(description='Train and save a model.')
+    parser.add_argument('--batch-size', action='store', type=int, default=32)
+    parser.add_argument('--steps-per-epoch', action='store', type=int, default=20)
+    parser.add_argument('--epochs', action='store', type=int, default=50)
+    parser.add_argument('--workers', action='store', type=int, default=2)
+    parser.add_argument('--max-queue-size', action='store', type=int, default=5)
+    parser.add_argument('--disable-multiprocessing', action='store_true', default=False)
+
+    args = parser.parse_args()
+    print('configs: %s' % args)
+
+    # instantiate model
     model = Unet().build_model()
 
     # plot model
@@ -101,5 +118,13 @@ if __name__ == '__main__':
                show_layer_names=True,
                rankdir='TB')
 
+    # compile model
     compile_model(model)
-    train_model(model)
+
+    # train model
+    train_model(model, epochs=args.epochs,
+                steps_per_epoch=args.steps_per_epoch,
+                batch_size=args.batch_size,
+                workers=args.workers,
+                max_queue_size=args.max_queue_size,
+                disable_multi_proc=args.disable_multiprocessing)
