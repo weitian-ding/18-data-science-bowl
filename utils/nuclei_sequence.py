@@ -27,4 +27,4 @@ class NucleiSequence(Sequence):
 
     def on_epoch_end(self):
         # shuffles the training set
-        self.df = self.df.sampe(frac=1)
+        self.df = self.df.sample(frac=1)
