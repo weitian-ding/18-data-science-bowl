@@ -3,20 +3,25 @@ from datetime import datetime
 from time import time
 
 import pandas as pd
-from keras.callbacks import ModelCheckpoint, TensorBoard
+import numpy as np
+
+from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.utils import plot_model
 
-from image_data_augmentation import BasicNucleiImageReader
 from img_seg_model.unet import Unet
-from metrics import dice_coef_loss
-from nuclei_sequence import NucleiSequence
+from utils.image_data_augmentation import BasicNucleiImageReader, read_image, read_mask
+from utils.metrics import dice_coef_loss
+from utils.nuclei_sequence import NucleiSequence
 
-STEPS_PER_EPOCH = 20
-
-TRAIN_DATA_PATH = 'data/train_data.json'
+TRAIN_DATA_PATH = 'data/train_data_train_split.json'
+CV_DATA_PATH = 'data/train_data_cv_split.json'
 MODEL_DIR = 'models'
 MODEL_NAME_PREFIX = 'unet'
 TB_DIR = 'tensorboard'
+
+BATCH_SIZE = 32
+EPOCHS = 100
+STEPS_PER_EPOCH = 21
 
 
 def compile_model(model):
@@ -27,6 +32,18 @@ def compile_model(model):
     print(model.summary())
 
 
+def load_cv_data(img_reader):
+    print('loading cross validation data...')
+
+    cv_df = pd.read_json(CV_DATA_PATH)
+    cv_df = cv_df.apply(img_reader, axis=1)
+
+    print('%s rows of cross validation data loaded' % cv_df.shape[0])
+
+    return np.array(cv_df['image'].tolist()), \
+           np.array(cv_df['mask'].tolist())
+
+
 def train_model(model):
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
@@ -34,28 +51,42 @@ def train_model(model):
                                           fixed_img_width=256,
                                           fixed_chann_num=3)
 
+    # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
-                                      batch_size=32,
+                                      batch_size=BATCH_SIZE,
                                       img_reader=image_reader)
 
-    timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
-    model_save_path = os.path.join(MODEL_DIR, '%s_%s.h5' % (timestamp, MODEL_NAME_PREFIX))
-    checkpoint = ModelCheckpoint(model_save_path, verbose=1)
+    # load cross validation data
+    X_cv, y_cv = load_cv_data(image_reader)
 
-    tb = TensorBoard(log_dir=TB_DIR,
-                     histogram_freq=STEPS_PER_EPOCH,
-                     write_graph=True,
+    # create model checkpoint
+    timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
+    model_name = '%s_%s.h5' % (timestamp, MODEL_NAME_PREFIX)
+    model_save_path = os.path.join(MODEL_DIR, model_name)
+    checkpoint = ModelCheckpoint(model_save_path, verbose=1, save_best_only=True)
+
+    # tensorboard
+    tb = TensorBoard(log_dir=os.path.join(TB_DIR, model_name),
+                     histogram_freq=1,
+                     write_graph=False,
                      write_grads=True,
                      write_images=True)
 
-    model.fit_generator(generator=nuclei_image_seq,
-                        steps_per_epoch=STEPS_PER_EPOCH,
-                        epochs=20,
-                        max_queue_size=5,
-                        workers=2,
-                        use_multiprocessing=True,
-                        shuffle=True,
-                        callbacks=[checkpoint, tb])
+    # early stopping
+    earlystop = EarlyStopping(patience=5, verbose=1)
+
+    hist = model.fit_generator(generator=nuclei_image_seq,
+                               steps_per_epoch=STEPS_PER_EPOCH,
+                               epochs=EPOCHS,
+                               max_queue_size=5,
+                               workers=2,
+                               use_multiprocessing=True,
+                               shuffle=True,
+                               validation_data=(X_cv, y_cv),
+                               callbacks=[checkpoint, tb, earlystop])
+
+    print('printing training history...')
+    print(hist)
 
 
 if __name__ == '__main__':
@@ -72,4 +103,3 @@ if __name__ == '__main__':
 
     compile_model(model)
     train_model(model)
-
