@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--workers', action='store', type=int, default=2)
     parser.add_argument('--max-queue-size', action='store', type=int, default=5)
     parser.add_argument('--disable-multiprocessing', action='store_true', default=False)
-    parser.add_argument('--plot-model', action='store_ture', default=False)
+    parser.add_argument('--plot-model', action='store_true', default=False)
 
     args = parser.parse_args()
     print('configs: %s' % args)
