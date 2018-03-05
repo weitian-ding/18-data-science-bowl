@@ -24,3 +24,7 @@ class NucleiSequence(Sequence):
 
         return np.array(batch_df['image'].tolist()), \
                np.array(batch_df['mask'].tolist())
+
+    def on_epoch_end(self):
+        # shuffles the training set
+        self.df = self.df.sampe(frac=1)

@@ -1,3 +1,5 @@
+from random import randint
+
 import pandas as pd
 from skimage import img_as_float
 from skimage.io import imread
@@ -58,12 +60,30 @@ def read_image(img_path,
     return img
 
 
+def random_crop(img_path, mask_paths, fixed_img_height, fixed_img_width):
+    img = read_image(img_path)
+    mask = read_mask(mask_paths)
+    masked_img = np.dstack((img, mask))
+
+    height, width, chann = img.shape
+
+    h_start_idx = randint(0, height - fixed_img_height)
+    w_start_idx = randint(0, width - fixed_img_width)
+
+    cropped = masked_img[h_start_idx:h_start_idx + fixed_img_height,
+              w_start_idx:w_start_idx + fixed_img_width, :]
+
+    return cropped[:, :, 0:chann], cropped[:, :, -1]
+
+
 def _resize(img, shape):
     return resize(img, shape, mode='constant', preserve_range=False)
 
 
 class BaseNucleiImageReader(object):
-    def __init__(self, fixed_img_height, fixed_img_width, fixed_chann_num):
+    def __init__(self, fixed_img_height=None,
+                 fixed_img_width=None,
+                 fixed_chann_num=None):
         self.fixed_img_height = fixed_img_height
         self.fixed_img_width = fixed_img_width
         self.fixed_chann_num = fixed_chann_num
@@ -88,3 +108,19 @@ class BasicNucleiImageReader(BaseNucleiImageReader):
                          fixed_img_width=self.fixed_img_width)
 
         return pd.Series({'image': img, 'mask': mask})
+
+
+class RandomCropImageReader(BaseNucleiImageReader):
+
+    def __init__(self, **kwargs):
+        super(RandomCropImageReader, self).__init__(**kwargs)
+
+    def __call__(self, _row):
+        img, mask = random_crop(img_path=_row['image_path'],
+                                mask_paths=_row['mask_paths'],
+                                fixed_img_height=self.fixed_img_height,
+                                fixed_img_width=self.fixed_img_width)
+
+        return pd.Series({'image': img, 'mask': mask})
+
+
