@@ -102,6 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--workers', action='store', type=int, default=2)
     parser.add_argument('--max-queue-size', action='store', type=int, default=5)
     parser.add_argument('--disable-multiprocessing', action='store_true', default=False)
+    parser.add_argument('--plot-model', action='store_ture', default=False)
 
     args = parser.parse_args()
     print('configs: %s' % args)
@@ -110,13 +111,14 @@ if __name__ == '__main__':
     model = Unet().build_model()
 
     # plot model
-    timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
-    model_plot_file = os.path.join(MODEL_DIR, '%s_%s.png' % (MODEL_NAME_PREFIX, timestamp))
-    plot_model(model,
-               to_file=model_plot_file,
-               show_shapes=True,
-               show_layer_names=True,
-               rankdir='TB')
+    if args.plot_model:
+        timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
+        model_plot_file = os.path.join(MODEL_DIR, '%s_%s.png' % (MODEL_NAME_PREFIX, timestamp))
+        plot_model(model,
+                   to_file=model_plot_file,
+                   show_shapes=True,
+                   show_layer_names=True,
+                   rankdir='TB')
 
     # compile model
     compile_model(model)
