@@ -11,4 +11,4 @@
 [train.py](train.py): trains and saves a model.
 
 ## Prediction
-TODO
+[predict_seg_map.py](predict_seg_map.py): predicts the segmentation map of nuclei images. 
