@@ -1,4 +1,6 @@
-from keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, Reshape, BatchNormalization, Concatenate, Dropout
+import keras.backend as K
+from keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, Reshape, Concatenate, Dropout, \
+    Lambda
 from keras.models import Model
 
 
@@ -146,5 +148,10 @@ class Unet(object):
                         activation='sigmoid')(u9)
 
         output = Reshape(target_shape=(256, 256))(output)
+
+        def repeatChann(x):
+            return K.stack([x, x], axis=3)
+
+        output = Lambda(repeatChann)(output)
 
         return Model(inputs=[inputs], outputs=output)

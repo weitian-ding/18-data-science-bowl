@@ -9,9 +9,8 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.utils import plot_model
 
 from img_seg_model.unet import Unet
-from utils.image_data_augmentation import BasicNucleiImageReader
-from utils.metrics import dice_coef_loss
-from utils.nuclei_sequence import NucleiSequence
+from utils.metrics import dice_coef_loss, weighted_binary_cross_entropy
+from utils.nuclei_image_data_flow import NucleiSequence, RescaledNucleiImageReader
 
 TRAIN_DATA_PATH = 'data/train_data_train_split.json'
 CV_DATA_PATH = 'data/train_data_cv_split.json'
@@ -23,7 +22,7 @@ TB_DIR = 'tensorboard'
 def compile_model(model):
 
     model.compile(optimizer='adam',
-                  loss='binary_crossentropy',
+                  loss=weighted_binary_cross_entropy,
                   metrics=[dice_coef_loss, 'mse', 'acc'])
 
     model.summary()
@@ -51,9 +50,8 @@ def train_model(model, batch_size,
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
-    image_reader = BasicNucleiImageReader(fixed_img_height=256,
-                                          fixed_img_width=256,
-                                          fixed_chann_num=3)
+    image_reader = RescaledNucleiImageReader(fixed_img_height=256,
+                                             fixed_img_width=256)
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
