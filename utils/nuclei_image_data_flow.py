@@ -53,20 +53,38 @@ class NucleiSequence(Sequence):
         self.df = df
         self.batch_size = batch_size
         self.img_reader = img_reader
+        self.cache = {}
 
     def __len__(self):
         return int(np.ceil(self.df.shape[0] / self.batch_size))
 
     def __getitem__(self, idx):
-        start_idx = idx * self.batch_size
-        end_idx = start_idx + self.batch_size
-        row_idx = [i % self.df.shape[0] for i in range(start_idx, end_idx)]
+        start_row_idx = idx * self.batch_size
+        end_row_idx = start_row_idx + self.batch_size
+        row_idx = [i % self.df.shape[0] for i in range(start_row_idx, end_row_idx)]
 
+        # batch data
         batch_df = self.df.iloc[row_idx]
-        batch_df = batch_df.apply(self.img_reader, axis=1)
+        batch_df_idx = batch_df.index.tolist()
 
-        return np.array(batch_df['image'].tolist()), \
-               np.array(batch_df['mask'].tolist())
+        # load images and masks into memory if not loaded
+        missed_idx = set(batch_df_idx) - set(self.cache.keys())
+        new_data = batch_df.loc[missed_idx].apply(self.img_reader, axis=1)
+
+        # cache
+        for i, r in new_data.iterrows():
+            self.cache[i] = (r['image'], r['mask'])
+
+        images = []
+        masks = []
+
+        # load images and masks from cache
+        for idx in batch_df_idx:
+            image, mask = self.cache[idx]
+            images.append(image)
+            masks.append(mask)
+
+        return np.array(images), np.array(masks)
 
     def on_epoch_end(self):
         # shuffles the training set
