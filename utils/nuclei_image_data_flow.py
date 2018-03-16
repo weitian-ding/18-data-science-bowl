@@ -1,3 +1,5 @@
+from multiprocessing import Manager
+
 import numpy as np
 import pandas as pd
 from keras.utils import Sequence
@@ -53,7 +55,10 @@ class NucleiSequence(Sequence):
         self.df = df
         self.batch_size = batch_size
         self.img_reader = img_reader
-        self.cache = {}
+        print('new sequence instantiated...')
+        manager = Manager()
+        self.cache = manager.dict()
+        #self.lock = Lock()
 
     def __len__(self):
         return int(np.ceil(self.df.shape[0] / self.batch_size))
@@ -69,12 +74,16 @@ class NucleiSequence(Sequence):
 
         # load images and masks into memory if not loaded
         missed_idx = set(batch_df_idx) - set(self.cache.keys())
+        #print('missed_idx=%s' % str(missed_idx))
+        #print('cache=%s' % str(self.cache.keys()))
         print('%s cache hits, %s cache misses' % (len(batch_df_idx) - len(missed_idx), len(missed_idx)))
         new_data = batch_df.loc[missed_idx].apply(self.img_reader, axis=1)
 
         # cache
+        #self.lock.acquire()
         for i, r in new_data.iterrows():
             self.cache[i] = (r['image'], r['mask'])
+        #self.lock.release()
 
         images = []
         masks = []
