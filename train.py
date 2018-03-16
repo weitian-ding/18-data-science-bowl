@@ -22,8 +22,8 @@ TB_DIR = 'tensorboard'
 def compile_model(model):
 
     model.compile(optimizer='adam',
-                  loss=weighted_binary_cross_entropy,
-                  metrics=[dice_coef_loss, 'mse', 'acc'])
+                  loss=weighted_binary_cross_entropy)
+                  #metrics=[dice_coef_loss, 'mse', 'acc']) # TODO enable metrics
 
     model.summary()
 
@@ -41,7 +41,9 @@ def load_cv_data(img_reader):
            np.array(cv_df['mask'].tolist())
 
 
-def train_model(model, batch_size,
+def train_model(model,
+                w, q,
+                batch_size,
                 steps_per_epoch,
                 epochs,
                 max_queue_size,
@@ -51,7 +53,9 @@ def train_model(model, batch_size,
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
     image_reader = RescaledNucleiImageReader(fixed_img_height=256,
-                                             fixed_img_width=256)
+                                             fixed_img_width=256,
+                                             w=w,
+                                             q=q)
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
@@ -101,6 +105,8 @@ if __name__ == '__main__':
     parser.add_argument('--max-queue-size', action='store', type=int, default=5)
     parser.add_argument('--disable-multiprocessing', action='store_true', default=False)
     parser.add_argument('--plot-model', action='store_true', default=False)
+    parser.add_argument('-w', action='store', type=float, default=10)
+    parser.add_argument('-q', action='store', type=float, default=5)
 
     args = parser.parse_args()
     print('configs: %s' % args)
@@ -123,6 +129,7 @@ if __name__ == '__main__':
 
     # train model
     train_model(model, epochs=args.epochs,
+                w=args.w, q=args.q,
                 steps_per_epoch=args.steps_per_epoch,
                 batch_size=args.batch_size,
                 workers=args.workers,

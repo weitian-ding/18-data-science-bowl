@@ -7,9 +7,11 @@ from keras.models import load_model
 from skimage.io import imread
 from skimage.transform import resize
 from os.path import basename
+import keras.backend as K
 
+from utils import layers
 from utils import metrics
-from utils.image_data_augmentation import read_image, read_mask
+from utils.nuclei_image import read_image, read_mask, rescale
 
 SEG_MAP_PATH_PREFIX = 'data/seg_map_%s_%s.json'
 
@@ -39,22 +41,25 @@ if __name__ == '__main__':
         .sort_values('id')\
         .reset_index(drop=True)
 
-    read_image_fixed_size = partial(read_image,
-                                    fixed_img_height=256,
-                                    fixed_img_width=256,
-                                    fixed_chann_num=3)
+    def read_image_fixed_size (image_path):
+        img = read_image(image_path)
+        return rescale(img, (256, 256, 3))
 
     test_df['image'] = test_df.image_path.map(read_image_fixed_size)
 
     # load model
     print('loading model %s...' % model_path)
+    custom_objs = metrics.custom_metrics_dict()
+    custom_objs.update(layers.custom_layers_dict())
+    print(custom_objs)
     model = load_model(model_path,
-                       custom_objects=metrics.custom_metrics_dict())
+                       custom_objects=custom_objs)
 
     # predict segmentation map
     print('predicting segmentation map...')
     seg_maps = model.predict(np.array(test_df['image'].tolist()), verbose=1)
-    test_df['seg_map'] = pd.Series(list(seg_maps), index=test_df.index)
+    seg_maps = [m[:, :, 0] for m in list(seg_maps)]
+    test_df['seg_map'] = pd.Series(seg_maps, index=test_df.index)
     test_df['seg_map'] = test_df.apply(resize_segmentation_map, axis=1)
     test_df['seg_map'] = test_df['seg_map'].map(lambda x: x[0])
 

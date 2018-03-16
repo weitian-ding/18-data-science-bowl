@@ -8,9 +8,11 @@ from utils.nuclei_image import random_crop, read_image, read_mask, rescale, FIXE
 
 
 class BaseNucleiImageReader(object):
-    def __init__(self, fixed_img_height=None, fixed_img_width=None):
+    def __init__(self, w=10, q=5, fixed_img_height=None, fixed_img_width=None):
         self.fixed_img_height = fixed_img_height
         self.fixed_img_width = fixed_img_width
+        self.w = w
+        self.q = q
 
     def __call__(self, _row):
         raise NotImplementedError
@@ -23,7 +25,7 @@ class RescaledNucleiImageReader(BaseNucleiImageReader):
 
     def __call__(self, _row):
         img = read_image(img_path=_row['image_path'])
-        mask = read_mask(mask_paths=_row['mask_paths'])
+        mask = read_mask(mask_paths=_row['mask_paths'], w=self.w, q=self.q)
 
         img = rescale(img,
                       shape=(self.fixed_img_height, self.fixed_img_width, FIXED_CHANN_NUM))

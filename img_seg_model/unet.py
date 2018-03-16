@@ -3,6 +3,8 @@ from keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, Reshape, 
     Lambda
 from keras.models import Model
 
+from utils.layers import RepeatVector2D
+
 
 class Unet(object):
 
@@ -149,9 +151,6 @@ class Unet(object):
 
         output = Reshape(target_shape=(256, 256))(output)
 
-        def repeatChann(x):
-            return K.stack([x, x], axis=3)
-
-        output = Lambda(repeatChann)(output)
+        output = RepeatVector2D()(output)
 
         return Model(inputs=[inputs], outputs=output)
