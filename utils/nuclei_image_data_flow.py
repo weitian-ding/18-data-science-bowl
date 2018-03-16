@@ -69,6 +69,7 @@ class NucleiSequence(Sequence):
 
         # load images and masks into memory if not loaded
         missed_idx = set(batch_df_idx) - set(self.cache.keys())
+        print('%s cache hits, %s cache misses' % (len(batch_df_idx) - len(missed_idx), len(missed_idx)))
         new_data = batch_df.loc[missed_idx].apply(self.img_reader, axis=1)
 
         # cache
