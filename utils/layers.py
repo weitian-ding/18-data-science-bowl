@@ -8,10 +8,11 @@ class RepeatVector2D(Layer):
         super(RepeatVector2D, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        super(RepeatVector2D, self).build(input_shape)  # Be sure to call this somewhere!
+        super(RepeatVector2D, self).build(input_shape)
 
     def call(self, x):
-        return K.stack([x, x], axis=3)
+        dummy = K.zeros(K.shape(x))
+        return K.stack([x, dummy], axis=3)
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], input_shape[1], input_shape[2], 2)

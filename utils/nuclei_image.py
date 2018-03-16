@@ -35,7 +35,7 @@ def read_mask(mask_paths, border_erosion=True, w=10, q=5):
 
 
 def read_image(img_path):
-    return img_as_float(imread(img_path)[:, :, FIXED_CHANN_NUM])
+    return img_as_float(imread(img_path)[:, :, 0:FIXED_CHANN_NUM])
 
 
 def random_crop(img_path, mask_paths, fixed_img_height, fixed_img_width):

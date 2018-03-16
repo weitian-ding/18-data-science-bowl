@@ -60,7 +60,6 @@ class NucleiSequence(Sequence):
         print('new sequence instantiated...')
         manager = Manager()
         self.cache = manager.dict()
-        #self.lock = Lock()
 
     def __len__(self):
         return int(np.ceil(self.df.shape[0] / self.batch_size))
@@ -78,14 +77,12 @@ class NucleiSequence(Sequence):
         missed_idx = set(batch_df_idx) - set(self.cache.keys())
         #print('missed_idx=%s' % str(missed_idx))
         #print('cache=%s' % str(self.cache.keys()))
-        print('%s cache hits, %s cache misses' % (len(batch_df_idx) - len(missed_idx), len(missed_idx)))
+        #print('%s cache hits, %s cache misses' % (len(batch_df_idx) - len(missed_idx), len(missed_idx)))
         new_data = batch_df.loc[missed_idx].apply(self.img_reader, axis=1)
 
         # cache
-        #self.lock.acquire()
         for i, r in new_data.iterrows():
             self.cache[i] = (r['image'], r['mask'])
-        #self.lock.release()
 
         images = []
         masks = []
