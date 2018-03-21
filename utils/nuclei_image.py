@@ -10,7 +10,7 @@ from scipy.ndimage.morphology import binary_erosion
 FIXED_CHANN_NUM = 3
 
 
-def read_mask(mask_paths, border_erosion=True, w=10, q=5):
+def read_mask(mask_paths, border_erosion=False, w=10, q=5):
     # read individual mask
     masks = [img_as_float(imread(p)) for p in mask_paths]
     if border_erosion:
