@@ -3,6 +3,9 @@ from multiprocessing import Manager
 import numpy as np
 import pandas as pd
 from keras.utils import Sequence
+import random
+
+from skimage.transform import rotate
 
 from utils.nuclei_image import random_crop, read_image, read_mask, rescale, FIXED_CHANN_NUM
 
@@ -94,6 +97,12 @@ class NucleiSequence(Sequence):
         # load images and masks from cache
         for idx in batch_df_idx:
             image, mask = self.cache[idx]
+
+            # random rotation
+            angle = random.choice([90, 180, 270])
+            image = rotate(image, angle)
+            mask = rotate(mask, angle)
+
             images.append(image)
             masks.append(mask)
 
