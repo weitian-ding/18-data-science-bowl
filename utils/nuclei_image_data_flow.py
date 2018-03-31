@@ -8,12 +8,12 @@ from utils.nuclei_image import random_crop, read_image, read_mask, rescale, FIXE
 
 
 class BaseNucleiImageReader(object):
-    def __init__(self, w=10, q=5, fixed_img_height=None, fixed_img_width=None, boder_erosion=False):
+    def __init__(self, w=10, q=5, fixed_img_height=None, fixed_img_width=None, border_erosion=False):
         self.fixed_img_height = fixed_img_height
         self.fixed_img_width = fixed_img_width
         self.w = w
         self.q = q
-        self.border_erosion = False
+        self.border_erosion = border_erosion
 
     def __call__(self, _row):
         raise NotImplementedError
