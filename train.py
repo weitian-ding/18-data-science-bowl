@@ -48,14 +48,17 @@ def train_model(model,
                 epochs,
                 max_queue_size,
                 workers,
-                disable_multi_proc):
+                disable_multi_proc,
+                border_erosion,
+                patience):
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
     image_reader = RescaledNucleiImageReader(fixed_img_height=256,
                                              fixed_img_width=256,
                                              w=w,
-                                             q=q)
+                                             q=q,
+                                             border_erosion=border_erosion)
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
@@ -79,7 +82,7 @@ def train_model(model,
                      write_images=True)
 
     # early stopping
-    earlystop = EarlyStopping(patience=5, verbose=1)
+    earlystop = EarlyStopping(patience=patience, verbose=1)
 
     hist = model.fit_generator(generator=nuclei_image_seq,
                                steps_per_epoch=steps_per_epoch,
@@ -107,6 +110,8 @@ if __name__ == '__main__':
     parser.add_argument('--plot-model', action='store_true', default=False)
     parser.add_argument('-w', action='store', type=float, default=10)
     parser.add_argument('-q', action='store', type=float, default=5)
+    parser.add_argument('--border_erosion', action='store_true', default=False)
+    parser.add_argument('--patience', type=int, default=5)
 
     args = parser.parse_args()
     print('configs: %s' % args)
@@ -134,4 +139,6 @@ if __name__ == '__main__':
                 batch_size=args.batch_size,
                 workers=args.workers,
                 max_queue_size=args.max_queue_size,
-                disable_multi_proc=args.disable_multiprocessing)
+                disable_multi_proc=args.disable_multiprocessing,
+                border_erosion=args.border_erosion,
+                patience=args.patience)

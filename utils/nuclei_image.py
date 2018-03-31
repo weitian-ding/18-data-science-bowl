@@ -29,7 +29,8 @@ def read_mask(mask_paths, border_erosion=False, w=10, q=5):
     shortest_dist = np.sort(distances, axis=0)
     d1 = shortest_dist[0]
     d2 = shortest_dist[1] if shortest_dist.shape[0] > 1 else np.zeros(d1.shape)
-    weight = 1 + (w * np.exp(-(d1 + d2) ** 2 / (2 * q ** 2)))
+    weight = w * np.exp(-(d1 + d2) ** 2 / (2 * q ** 2))
+    weight = 1 + (mask == 0) * weight
 
     return np.stack([mask, weight], axis=2)
 
