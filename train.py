@@ -68,11 +68,15 @@ def train_model(model,
     # load cross validation data
     X_cv, y_cv = load_cv_data(image_reader)
 
+    callbacks = []
+
     # create model checkpoint
     timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
     model_name = '%s_%s.h5' % (timestamp, MODEL_NAME_PREFIX)
     model_save_path = os.path.join(MODEL_DIR, model_name)
     checkpoint = ModelCheckpoint(model_save_path, verbose=1, save_best_only=True)
+
+    callbacks.append(checkpoint)
 
     # tensorboard
     tb = TensorBoard(log_dir=os.path.join(TB_DIR, model_name),
@@ -81,8 +85,12 @@ def train_model(model,
                      write_grads=True,
                      write_images=True)
 
+    callbacks.append(tb)
+
     # early stopping
-    earlystop = EarlyStopping(patience=patience, verbose=1)
+    if (patience > 0):
+        earlystop = EarlyStopping(patience=patience, verbose=1)
+        callbacks.append(earlystop)
 
     hist = model.fit_generator(generator=nuclei_image_seq,
                                steps_per_epoch=steps_per_epoch,
@@ -92,7 +100,7 @@ def train_model(model,
                                use_multiprocessing=(not disable_multi_proc),
                                shuffle=True,
                                validation_data=(X_cv, y_cv),
-                               callbacks=[checkpoint, tb, earlystop])
+                               callbacks=callbacks)
 
     print('printing training history...')
 
