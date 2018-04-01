@@ -79,12 +79,42 @@ class Unet(object):
                     activation='elu',
                     kernel_initializer='he_normal',
                     padding='same')(c5)
-        # p5 = MaxPooling2D(pool_size=(2, 2))(c5)
+        p5 = MaxPooling2D(pool_size=(2, 2))(c5)
+
+        c_b = Conv2D(filters=512,
+                    kernel_size=(3, 3),
+                    activation='elu',
+                    kernel_initializer='he_normal',
+                    padding='same')(p5)
+        c_b = Dropout(0.3)(c_b)
+        c_b = Conv2D(filters=512,
+                    kernel_size=(3, 3),
+                    activation='elu',
+                    kernel_initializer='he_normal',
+                    padding='same')(c_b)
+
+        u_b = Conv2DTranspose(filters=256,
+                             kernel_size=(2, 2),
+                             strides=(2, 2),
+                             padding='same')(c_b)
+        u_b = Conv2D(filters=256,
+                    kernel_size=(3, 3),
+                    padding='same',
+                    kernel_initializer='he_normal',
+                    activation='elu')(Concatenate()([u_b, c5]))
+        u_b = Dropout(0.2)(u_b)
+        u_b = Conv2D(filters=256,
+                    kernel_size=(3, 3),
+                    padding='same',
+                    kernel_initializer='he_normal',
+                    activation='elu')(u_b)
+
+
 
         u6 = Conv2DTranspose(filters=128,
                              kernel_size=(2, 2),
                              strides=(2, 2),
-                             padding='same')(c5)
+                             padding='same')(u_b)
         u6 = Conv2D(filters=128,
                     kernel_size=(3, 3),
                     padding='same',
