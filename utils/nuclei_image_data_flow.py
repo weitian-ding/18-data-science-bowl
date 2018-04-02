@@ -99,7 +99,7 @@ class NucleiSequence(Sequence):
             image, mask = self.cache[idx]
 
             # random rotation
-            angle = random.choice([90, 180, 270])
+            angle = random.choice([0, 180])
             image = rotate(image, angle)
             mask = rotate(mask, angle)
 

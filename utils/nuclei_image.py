@@ -7,6 +7,8 @@ from skimage.io import imread
 from skimage.transform import resize
 from scipy.ndimage.morphology import binary_erosion
 
+from utils.DarkChannelRecover import getRecoverScene
+
 FIXED_CHANN_NUM = 3
 
 
@@ -36,7 +38,9 @@ def read_mask(mask_paths, border_erosion=False, w=10, q=5):
 
 
 def read_image(img_path):
-    return img_as_float(imread(img_path)[:, :, 0:FIXED_CHANN_NUM])
+    img = imread(img_path)[:, :, 0:FIXED_CHANN_NUM]
+    img = getRecoverScene(img, refine=True)
+    return img_as_float(img)
 
 
 def random_crop(img_path, mask_paths, fixed_img_height, fixed_img_width):

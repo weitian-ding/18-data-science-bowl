@@ -102,7 +102,7 @@ class Unet(object):
                     padding='same',
                     kernel_initializer='he_normal',
                     activation='elu')(Concatenate()([u_b, c5]))
-        # u_b = Dropout(0.2)(u_b)
+        u_b = Dropout(0.2)(u_b)
         u_b = Conv2D(filters=256,
                     kernel_size=(3, 3),
                     padding='same',
@@ -120,7 +120,7 @@ class Unet(object):
                     padding='same',
                     kernel_initializer='he_normal',
                     activation='elu')(Concatenate()([u6, c4]))
-        # u6 = Dropout(0.2)(u6)
+        u6 = Dropout(0.2)(u6)
         u6 = Conv2D(filters=128,
                     kernel_size=(3, 3),
                     padding='same',
@@ -136,7 +136,7 @@ class Unet(object):
                     padding='same',
                     kernel_initializer='he_normal',
                     activation='elu')(Concatenate()([u7, c3]))
-        # u7 = Dropout(0.2)(u7)
+        u7 = Dropout(0.2)(u7)
         u7 = Conv2D(filters=64,
                     kernel_size=(3, 3),
                     padding='same',
@@ -152,7 +152,7 @@ class Unet(object):
                     padding='same',
                     kernel_initializer='he_normal',
                     activation='elu')(Concatenate()([u8, c2]))
-        # u8 = Dropout(0.1)(u8)
+        u8 = Dropout(0.1)(u8)
         u8 = Conv2D(filters=32,
                     kernel_size=(3, 3),
                     padding='same',
@@ -168,7 +168,7 @@ class Unet(object):
                     padding='same',
                     kernel_initializer='he_normal',
                     activation='elu')(Concatenate()([u9, c1]))
-        # u9 = Dropout(0.1)(u9)
+        u9 = Dropout(0.1)(u9)
         u9 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     padding='same',
