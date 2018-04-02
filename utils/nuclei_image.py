@@ -37,9 +37,17 @@ def read_mask(mask_paths, border_erosion=False, w=10, q=5):
     return np.stack([mask, weight], axis=2)
 
 
-def read_image(img_path):
+def read_image(img_path, dehaze=False):
     img = imread(img_path)[:, :, 0:FIXED_CHANN_NUM]
-    img = getRecoverScene(img, refine=True)
+
+    # check if the image is black and white
+    is_black_white = np.logical_and.reduce((img[:, :, 0] == img[:, :, 1]).flatten()) \
+                     and np.logical_and.reduce((img[:, :, 0] == img[:, :, 2]).flatten())
+
+    # dehaze
+    if (is_black_white and dehaze):
+        img = getRecoverScene(img, refine=True)
+
     return img_as_float(img)
 
 

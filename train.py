@@ -50,7 +50,8 @@ def train_model(model,
                 workers,
                 disable_multi_proc,
                 border_erosion,
-                patience):
+                patience,
+                dehaze):
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
@@ -58,7 +59,8 @@ def train_model(model,
                                              fixed_img_width=256,
                                              w=w,
                                              q=q,
-                                             border_erosion=border_erosion)
+                                             border_erosion=border_erosion,
+                                             dehaze=dehaze)
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
@@ -120,6 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('-q', action='store', type=float, default=5)
     parser.add_argument('--border_erosion', action='store_true', default=False)
     parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--dehaze', action='store_true', default=False)
 
     args = parser.parse_args()
     print('configs: %s' % args)
@@ -149,4 +152,5 @@ if __name__ == '__main__':
                 max_queue_size=args.max_queue_size,
                 disable_multi_proc=args.disable_multiprocessing,
                 border_erosion=args.border_erosion,
-                patience=args.patience)
+                patience=args.patience,
+                dehaze=args.dehaze)
