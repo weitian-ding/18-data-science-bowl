@@ -51,7 +51,8 @@ def train_model(model,
                 disable_multi_proc,
                 border_erosion,
                 patience,
-                dehaze):
+                dehaze,
+                save_best_only):
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
@@ -76,7 +77,7 @@ def train_model(model,
     timestamp = datetime.fromtimestamp(time()).strftime('%m-%d-%H-%M-%S')
     model_name = '%s_%s.h5' % (timestamp, MODEL_NAME_PREFIX)
     model_save_path = os.path.join(MODEL_DIR, model_name)
-    checkpoint = ModelCheckpoint(model_save_path, verbose=1, save_best_only=True)
+    checkpoint = ModelCheckpoint(model_save_path, verbose=1, save_best_only=save_best_only)
 
     callbacks.append(checkpoint)
 
@@ -123,6 +124,7 @@ if __name__ == '__main__':
     parser.add_argument('--border_erosion', action='store_true', default=False)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--dehaze', action='store_true', default=False)
+    parser.add_argument('--save-best-only', action='store_true', default=False)
 
     args = parser.parse_args()
     print('configs: %s' % args)
@@ -153,4 +155,5 @@ if __name__ == '__main__':
                 disable_multi_proc=args.disable_multiprocessing,
                 border_erosion=args.border_erosion,
                 patience=args.patience,
-                dehaze=args.dehaze)
+                dehaze=args.dehaze,
+                save_best_only=args.save_best_only)
