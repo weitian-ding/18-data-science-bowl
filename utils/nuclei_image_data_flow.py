@@ -6,14 +6,14 @@ from keras.utils import Sequence
 import random
 
 from skimage.transform import rotate
+from skimage.util import  pad
 
-from utils.nuclei_image import random_crop, read_image, read_mask, rescale, FIXED_CHANN_NUM
+from utils.nuclei_image import random_crop, read_image, read_mask, resize_image, FIXED_CHANN_NUM
 
 
 class BaseNucleiImageReader(object):
-    def __init__(self, w=10, q=5, fixed_img_height=None, fixed_img_width=None, border_erosion=False, dehaze=False):
-        self.fixed_img_height = fixed_img_height
-        self.fixed_img_width = fixed_img_width
+    def __init__(self, w=10, q=5, fixed_img_size=None, border_erosion=False, dehaze=False):
+        self.fixed_img_size = fixed_img_size
         self.w = w
         self.q = q
         self.border_erosion = border_erosion
@@ -23,24 +23,72 @@ class BaseNucleiImageReader(object):
         raise NotImplementedError
 
 
-class RescaledNucleiImageReader(BaseNucleiImageReader):
-
-    def __init__(self, **kwargs):
-        super(RescaledNucleiImageReader, self).__init__(**kwargs)
-
-    def __call__(self, _row):
+    def _read_image_and_mask(self, _row):
         img = read_image(img_path=_row['image_path'], dehaze=self.dehaze)
         mask = read_mask(mask_paths=_row['mask_paths'],
                          w=self.w,
                          q=self.q,
                          border_erosion=self.border_erosion)
+        return img, mask
 
-        img = rescale(img,
-                      shape=(self.fixed_img_height, self.fixed_img_width, FIXED_CHANN_NUM))
-        mask = rescale(mask,
-                       shape=(self.fixed_img_height, self.fixed_img_width, 2))
+
+class ResizeNucleiImageReader(BaseNucleiImageReader):
+
+    def __init__(self, **kwargs):
+        super(ResizeNucleiImageReader, self).__init__(**kwargs)
+
+    def __call__(self, _row):
+        img, mask = self._read_image_and_mask(_row)
+
+        # resize image and mask to fixed_img_height * fixed_img_width
+        img = resize_image(img,
+                           shape=(self.fixed_img_size, self.fixed_img_size, FIXED_CHANN_NUM))
+        mask = resize_image(mask,
+                            shape=(self.fixed_img_size, self.fixed_img_size, 2))
 
         return pd.Series({'image': img, 'mask': mask})
+
+
+class RescalePadNucleiImageReader(BaseNucleiImageReader):
+
+    def __init__(self, mode, **kwargs):
+        super(RescalePadNucleiImageReader, self).__init__(**kwargs)
+        self.mode = mode
+
+    def __call__(self, _row):
+        img, mask = self._read_image_and_mask(_row)
+
+        # rescale
+        rescale_height, rescale_width = RescalePadNucleiImageReader.get_rescaled_shape(img, self.fixed_img_size)
+
+        img = resize_image(img,
+                           shape=(rescale_height, rescale_width, FIXED_CHANN_NUM))
+        mask = resize_image(mask,
+                            shape=(rescale_height, rescale_width, 2))
+
+        # pad the image to a square
+        pad_width = [(0, self.fixed_img_size - rescale_height), (0, self.fixed_img_size - rescale_width), (0, 0)]
+        img = pad(img, pad_width, mode=self.mode)
+        mask = pad(mask, pad_width, mode=self.mode)
+
+        return pd.Series({'image': img, 'mask': mask})
+
+    @staticmethod
+    def get_rescaled_shape(img, fixed_img_size):
+        height, width, _ = img.shape
+
+        if max(height, width) <= fixed_img_size:
+            return height, width
+
+        # Rescale the image so max(height, width) = fixed_img_size
+        if height > width:
+            rescale_height = fixed_img_size
+            rescale_width = int(np.floor(width * (float(fixed_img_size) / height)))
+        else:
+            rescale_height = int(np.floor(height * (float(fixed_img_size) / width)))
+            rescale_width = fixed_img_size
+
+        return rescale_height, rescale_width
 
 
 # TODO update the code to add another channel in mask
@@ -52,7 +100,7 @@ class RandomCropImageReader(BaseNucleiImageReader):
     def __call__(self, _row):
         img, mask = random_crop(img_path=_row['image_path'],
                                 mask_paths=_row['mask_paths'],
-                                fixed_img_height=self.fixed_img_height,
+                                fixed_img_height=self.fixed_img_size,
                                 fixed_img_width=self.fixed_img_width)
 
         return pd.Series({'image': img, 'mask': mask})
@@ -83,9 +131,6 @@ class NucleiSequence(Sequence):
 
         # load images and masks into memory if not loaded
         missed_idx = set(batch_df_idx) - set(self.cache.keys())
-        #print('missed_idx=%s' % str(missed_idx))
-        #print('cache=%s' % str(self.cache.keys()))
-        #print('%s cache hits, %s cache misses' % (len(batch_df_idx) - len(missed_idx), len(missed_idx)))
         new_data = batch_df.loc[missed_idx].apply(self.img_reader, axis=1)
 
         # cache
@@ -100,7 +145,7 @@ class NucleiSequence(Sequence):
             image, mask = self.cache[idx]
 
             # random rotation
-            angle = random.choice([0, 180])
+            angle = random.choice([0, 90, 180, 270])
             image = rotate(image, angle)
             mask = rotate(mask, angle)
 

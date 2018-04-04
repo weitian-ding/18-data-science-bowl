@@ -10,7 +10,7 @@ from keras.utils import plot_model
 
 from img_seg_model.unet import Unet
 from utils.metrics import dice_coef_loss, weighted_binary_cross_entropy
-from utils.nuclei_image_data_flow import NucleiSequence, RescaledNucleiImageReader
+from utils.nuclei_image_data_flow import NucleiSequence, ResizeNucleiImageReader, RescalePadNucleiImageReader
 
 TRAIN_DATA_PATH = 'data/train_data_train_split.json'
 CV_DATA_PATH = 'data/train_data_cv_split.json'
@@ -56,12 +56,12 @@ def train_model(model,
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
-    image_reader = RescaledNucleiImageReader(fixed_img_height=256,
-                                             fixed_img_width=256,
-                                             w=w,
-                                             q=q,
-                                             border_erosion=border_erosion,
-                                             dehaze=dehaze)
+    image_reader = RescalePadNucleiImageReader(fixed_img_size=256,
+                                               w=w,
+                                               q=q,
+                                               border_erosion=border_erosion,
+                                               dehaze=dehaze,
+                                               mode="reflect")
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,

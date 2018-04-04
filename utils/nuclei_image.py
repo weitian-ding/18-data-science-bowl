@@ -67,7 +67,7 @@ def random_crop(img_path, mask_paths, fixed_img_height, fixed_img_width):
     return cropped[:, :, 0:chann], cropped[:, :, chann:]
 
 
-def rescale(img, shape):
+def resize_image(img, shape):
     return resize(img, shape, mode='constant', preserve_range=False)
 
 
