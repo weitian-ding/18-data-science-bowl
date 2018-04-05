@@ -51,18 +51,18 @@ def read_image(img_path, dehaze=False):
     return img_as_float(img)
 
 
-def random_crop(img_path, mask_paths, fixed_img_height, fixed_img_width):
-    img = read_image(img_path)
-    mask = read_mask(mask_paths)
-    masked_img = np.dstack((img, mask))
+# random crop
+def random_crop(image, mask, fixed_image_size):
 
-    height, width, chann = img.shape
+    stacked = np.dstack((image, mask))
 
-    h_start_idx = randint(0, height - fixed_img_height)
-    w_start_idx = randint(0, width - fixed_img_width)
+    height, width, chann = image.shape
 
-    cropped = masked_img[h_start_idx:h_start_idx + fixed_img_height,
-              w_start_idx:w_start_idx + fixed_img_width, :]
+    h_start_idx = randint(0, height - fixed_image_size)
+    w_start_idx = randint(0, width - fixed_image_size)
+
+    cropped = stacked[h_start_idx:h_start_idx + fixed_image_size,
+              w_start_idx:w_start_idx + fixed_image_size, :]
 
     return cropped[:, :, 0:chann], cropped[:, :, chann:]
 

@@ -21,12 +21,6 @@ class BaseNucleiImageReader(object):
     def __call__(self, _row):
         raise NotImplementedError
 
-
-class FixedSizeNucleiImageReader(BaseNucleiImageReader):
-    def __init__(self,fixed_img_size=None, **kwargs):
-        self.fixed_img_size = fixed_img_size
-        super(FixedSizeNucleiImageReader, self).__init__(**kwargs)
-
     def _read_image_and_mask(self, _row):
         img = read_image(img_path=_row['image_path'], dehaze=self.dehaze)
         mask = read_mask(mask_paths=_row['mask_paths'],
@@ -34,6 +28,12 @@ class FixedSizeNucleiImageReader(BaseNucleiImageReader):
                          q=self.q,
                          border_erosion=self.border_erosion)
         return img, mask
+
+
+class FixedSizeNucleiImageReader(BaseNucleiImageReader):
+    def __init__(self,fixed_img_size=None, **kwargs):
+        self.fixed_img_size = fixed_img_size
+        super(FixedSizeNucleiImageReader, self).__init__(**kwargs)
 
 
 class ResizeNucleiImageReader(FixedSizeNucleiImageReader):
@@ -95,20 +95,26 @@ class RescalePadNucleiImageReader(FixedSizeNucleiImageReader):
         return rescale_height, rescale_width
 
 
-# TODO update the code to add another channel in mask
 class NucleiImageReader(BaseNucleiImageReader):
 
     def __init__(self, **kwargs):
         super(NucleiImageReader, self).__init__(**kwargs)
 
     def __call__(self, _row):
-        img = read_image(img_path=_row['image_path'], dehaze=self.dehaze)
-        mask = read_mask(mask_paths=_row['mask_paths'],
-                         w=self.w,
-                         q=self.q,
-                         border_erosion=self.border_erosion)
-
+        img, mask = self._read_image_and_mask(_row)
         return pd.Series({'image': img, 'mask': mask})
+
+
+class RandomCropImageReader(FixedSizeNucleiImageReader):
+
+    def __init__(self, **kwargs):
+        super(RandomCropImageReader, self).__init__(**kwargs)
+
+    def __call__(self, _row):
+        image, mask = self._read_image_and_mask(_row)
+        image, mask = random_crop(image, mask, self.fixed_img_size)
+
+        return pd.Series({'image': image, 'mask': mask})
 
 
 class NucleiSequence(Sequence):
@@ -152,18 +158,7 @@ class NucleiSequence(Sequence):
             image, mask = self.cache[idx]
 
             # random crop
-            stacked = np.dstack((image, mask))
-
-            height, width, chann = image.shape
-
-            h_start_idx = random.randint(0, height - self.fixed_image_size)
-            w_start_idx = random.randint(0, width - self.fixed_image_size)
-
-            cropped = stacked[h_start_idx:h_start_idx + self.fixed_image_size,
-                              w_start_idx:w_start_idx + self.fixed_image_size, :]
-
-            image, mask = (cropped[:, :, 0:chann], cropped[:, :, chann:])
-
+            image, mask = random_crop(image, mask, self.fixed_image_size)
 
             # random rotation
             angle = random.choice([0, 90, 180, 270])
