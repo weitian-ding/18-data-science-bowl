@@ -10,7 +10,8 @@ from keras.utils import plot_model
 
 from img_seg_model.unet import Unet
 from utils.metrics import dice_coef_loss, weighted_binary_cross_entropy
-from utils.nuclei_image_data_flow import NucleiSequence, ResizeNucleiImageReader, RescalePadNucleiImageReader
+from utils.nuclei_image_data_flow import NucleiSequence, ResizeNucleiImageReader, RescalePadNucleiImageReader, \
+    NucleiImageReader
 
 TRAIN_DATA_PATH = 'data/train_data_train_split.json'
 CV_DATA_PATH = 'data/train_data_cv_split.json'
@@ -56,20 +57,26 @@ def train_model(model,
 
     train_df = pd.read_json(TRAIN_DATA_PATH)
 
-    image_reader = RescalePadNucleiImageReader(fixed_img_size=256,
-                                               w=w,
-                                               q=q,
-                                               border_erosion=border_erosion,
-                                               dehaze=dehaze,
-                                               mode="reflect")
+    train_image_reader = NucleiImageReader(w=w,
+                                     q=q,
+                                     border_erosion=border_erosion,
+                                     dehaze=dehaze)
+
+    cv_image_reader = RescalePadNucleiImageReader(fixed_img_size=256,
+                                                  w=w,
+                                                  q=q,
+                                                  border_erosion=border_erosion,
+                                                  dehaze=dehaze,
+                                                  mode="reflect")
 
     # create training data sequence
     nuclei_image_seq = NucleiSequence(df=train_df,
                                       batch_size=batch_size,
-                                      img_reader=image_reader)
+                                      img_reader=train_image_reader,
+                                      fixed_image_size=256)
 
     # load cross validation data
-    X_cv, y_cv = load_cv_data(image_reader)
+    X_cv, y_cv = load_cv_data(cv_image_reader)
 
     callbacks = []
 
