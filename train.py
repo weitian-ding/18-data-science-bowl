@@ -8,7 +8,7 @@ import pandas as pd
 from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.utils import plot_model
 
-from img_seg_model.unet import Unet
+from deep_cnn.unet import Unet
 from utils.metrics import dice_coef_loss, weighted_binary_cross_entropy
 from utils.nuclei_image_data_flow import NucleiSequence, ResizeNucleiImageReader, RescalePadNucleiImageReader, \
     NucleiImageReader, RandomCropImageReader

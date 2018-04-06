@@ -1,6 +1,6 @@
 import keras.backend as K
 from keras.layers import Input, Conv2D, MaxPooling2D, Conv2DTranspose, Reshape, Concatenate, Dropout, \
-    Lambda
+    Lambda, BatchNormalization
 from keras.models import Model
 
 from utils.layers import RepeatVector2D
@@ -14,13 +14,13 @@ class Unet(object):
 
     def build_model(self):
         inputs = Input((256, 256, 3))
-        # normed = BatchNormalization()(inputs)
+        normed = BatchNormalization()(inputs)
 
         c1 = Conv2D(filters=16,
                     kernel_size=(3, 3),
                     activation='elu',
                     kernel_initializer='he_normal',
-                    padding='same')(inputs)
+                    padding='same')(normed)
         c1 = Dropout(0.1)(c1)
         c1 = Conv2D(filters=16,
                     kernel_size=(3, 3),
