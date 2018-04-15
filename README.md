@@ -11,4 +11,5 @@
 [train.py](train.py): trains and saves a model.
 
 ## Prediction
-[predict_seg_map.py](predict_seg_map.py): predicts the segmentation map of nuclei images. 
+[predict_window.py](predict_window.py): predicts the segmentation maps of abitrary sized test images using a sliding window. 
+[predict_rescale.py](predict_window.py): predicts the segmentation maps of rescaled test images. 
