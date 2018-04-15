@@ -3,6 +3,7 @@ from random import randint
 import numpy as np
 from scipy import ndimage
 from skimage import img_as_float
+from skimage.filters import threshold_otsu
 from skimage.io import imread
 from skimage.transform import resize
 from scipy.ndimage.morphology import binary_erosion
@@ -38,7 +39,14 @@ def read_mask(mask_paths, border_erosion=False, w=10, q=5):
 
 
 def read_image(img_path, dehaze=False):
-    img = imread(img_path)[:, :, 0:FIXED_CHANN_NUM]
+    img = imread(img_path)
+
+    if (len(img.shape) < 3):
+        print('%s is ill shaped, padding as if gray scale' % (img_path))
+        img = img_as_float(img)
+        img = np.stack([img, img, img], axis=2)
+
+    img = img[:, :, 0:FIXED_CHANN_NUM]
 
     # check if the image is black and white
     is_black_white = np.logical_and.reduce((img[:, :, 0] == img[:, :, 1]).flatten()) \
@@ -69,6 +77,23 @@ def random_crop(image, mask, fixed_image_size):
 
 def resize_image(img, shape):
     return resize(img, shape, mode='constant', preserve_range=False)
+
+
+def rle_seg_map(seg_map):
+    cutoff = threshold_otsu(seg_map)
+    rle = _run_length_encode(seg_map > cutoff)
+    return ' '.join(str(y) for y in rle)
+
+
+def _run_length_encode(x):
+    dots = np.where(x.T.flatten() == 1)[0]
+    run_lengths = []
+    prev = -2
+    for b in dots:
+        if (b>prev+1): run_lengths.extend((b + 1, 0))
+        run_lengths[-1] += 1
+        prev = b
+    return run_lengths
 
 
 

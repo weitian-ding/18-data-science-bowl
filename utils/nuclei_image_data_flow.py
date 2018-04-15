@@ -79,7 +79,11 @@ class RescalePadNucleiImageReader(FixedSizeNucleiImageReader):
 
     @staticmethod
     def get_rescaled_shape(img, fixed_img_size):
-        height, width, _ = img.shape
+        try:
+            height, width, _ = img.shape
+        except:
+            print("image is ill shaped, assuming 2D")
+            height, width = img.shape
 
         if max(height, width) <= fixed_img_size:
             return height, width
